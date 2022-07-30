@@ -49,7 +49,23 @@
                 </div>
             </form>
             `
-            attention.custom({msg: html, title: "Choose your dates"});
+            attention.custom({
+                msg: html,
+                title: "Choose your dates",
+                callback: function(result) {
+                    console.log("called")
+                    // переди по ссылке
+                    fetch('/search-availability-json')
+                    // затем преобразуй ответ в json
+                    .then(response => response.json())
+                    // затем выведи данные
+                    .then(data => {
+                        console.log(data)
+                        console.log(data.ok)
+                        console.log(data.message)
+                    })
+
+                }});
         });
     </script>
 {{end}}

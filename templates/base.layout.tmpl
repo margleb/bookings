@@ -184,33 +184,51 @@
                         title = ""
                     } = c
 
-                    const { value: formValues } = await Swal.fire({
+                    const { value: result } = await Swal.fire({
                         title: title,
                         html: msg,
                         backdrop: false,
                         focusConfirm: false,
                         showCancelButton: true,
+                        // вызывается перед тем как окно будет показано окно
                         willOpen: () => {
                             const elem = document.getElementById('reservation-dates-modal')
+                            // добавляет выбор дат в модальное окно
                             const rp = new DateRangePicker(elem, {
                                 format: 'yyyy-mm-dd',
                                 showOnFocus: true,
                             })
                         },
+                        // вызывается перед тем как будет подтверждено окно
                         preConfirm: () => {
                             return [
                                 document.getElementById('start').value,
                                 document.getElementById('end').value
                             ]
                         },
+                        // вызывается после того, как окно будет показано на странице
                         didOpen: () => {
                             document.getElementById('start').removeAttribute('disabled')
                             document.getElementById('end').removeAttribute('disabled')
                         }
                     })
 
-                    if (formValues) {
-                        Swal.fire(JSON.stringify(formValues))
+                    // если есть введенные результат
+                    if(result) {
+                        // если не была нажата кнопка отмены
+                        if(result.dismiss !== Swal.DismissReason.cancel) {
+                            // если значение не пустые
+                            if(result.value !== "") {
+                                // если опраделена была функция callback
+                                if(c.callback !== undefined) {
+                                    c.callback(result)
+                                }
+                            } else {
+                                c.callback(false)
+                            }
+                        } else {
+                            c.callback(false)
+                        }
                     }
                 }
 
