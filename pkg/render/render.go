@@ -3,6 +3,7 @@ package render
 import (
 	"bytes"
 	"fmt"
+	"github.com/justinas/nosurf"
 	"github.com/margleb/booking/pkg/config"
 	"github.com/margleb/booking/pkg/models"
 	"log"
@@ -22,11 +23,12 @@ func NewTemplates(a *config.AppConfig) {
 }
 
 // AddDefaultData передает в шаблоны данные по умолчанию
-func AddDefaultData(td *models.TemplateData) *models.TemplateData {
+func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
+	td.CSRFToken = nosurf.Token(r)
 	return td
 }
 
-func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) {
 
 	var tc map[string]*template.Template
 	//  если необходимо использовать кеш
@@ -47,7 +49,7 @@ func RenderTemplate(w http.ResponseWriter, tmpl string, td *models.TemplateData)
 	buf := new(bytes.Buffer)
 
 	// в случаем если данные по умолчанию то добавляет их
-	td = AddDefaultData(td)
+	td = AddDefaultData(td, r)
 
 	// записываем в буфер полученный шаблон
 	_ = t.Execute(buf, td)
