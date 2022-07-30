@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/margleb/booking/pkg/config"
 	"github.com/margleb/booking/pkg/models"
 	"github.com/margleb/booking/pkg/render"
+	"log"
 	"net/http"
 )
 
@@ -83,6 +85,35 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 	_, _ = w.Write([]byte(fmt.Sprintf("Started date: %s, ended date: %s", start, end)))
+}
+
+type jsonResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+}
+
+// AvailabilityJSON обрабатывает JSON запросы
+func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+
+	// Пример JSON
+	resp := jsonResponse{
+		OK:      true,
+		Message: "Available",
+	}
+
+	// Преобразуем struct в JSON
+	out, err := json.MarshalIndent(resp, "", "  ")
+	if err != nil {
+		return
+	}
+
+	// Выводим лог, а также устанавливаем заголовок
+	log.Println(string(out))
+	w.Header().Set("Content-Type", "application/json")
+
+	// Записываем в ответ
+	_, _ = w.Write(out)
+
 }
 
 // Contact is the about page handler
