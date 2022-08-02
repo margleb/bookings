@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/alexedwards/scs/v2"
-	"github.com/margleb/booking/pkg/config"
-	"github.com/margleb/booking/pkg/handlers"
-	"github.com/margleb/booking/pkg/render"
+	"github.com/margleb/booking/internal/config"
+	"github.com/margleb/booking/internal/handlers"
+	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
 	"time"

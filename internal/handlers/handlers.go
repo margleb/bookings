@@ -3,9 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/margleb/booking/pkg/config"
-	"github.com/margleb/booking/pkg/models"
-	"github.com/margleb/booking/pkg/render"
+	"github.com/margleb/booking/internal/config"
+	"github.com/margleb/booking/internal/models"
+	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
 )
