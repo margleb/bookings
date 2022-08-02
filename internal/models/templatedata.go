@@ -1,5 +1,7 @@
 package models
 
+import "github.com/margleb/booking/internal/forms"
+
 // TemplateData Данные для передачи в шаблон
 type TemplateData struct {
 	StringMap map[string]string
@@ -10,4 +12,5 @@ type TemplateData struct {
 	Flash     string                 // флеш сообщения
 	Warning   string                 // предупреждения
 	Error     string                 // ошибки
+	Form      *forms.Form
 }
