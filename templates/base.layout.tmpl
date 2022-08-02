@@ -192,12 +192,9 @@
                         showCancelButton: true,
                         // вызывается перед тем как окно будет показано окно
                         willOpen: () => {
-                            const elem = document.getElementById('reservation-dates-modal')
-                            // добавляет выбор дат в модальное окно
-                            const rp = new DateRangePicker(elem, {
-                                format: 'yyyy-mm-dd',
-                                showOnFocus: true,
-                            })
+                            if(c.willOpen !== undefined) {
+                                c.willOpen()
+                            }
                         },
                         // вызывается перед тем как будет подтверждено окно
                         preConfirm: () => {
@@ -208,9 +205,10 @@
                         },
                         // вызывается после того, как окно будет показано на странице
                         didOpen: () => {
-                            document.getElementById('start').removeAttribute('disabled')
-                            document.getElementById('end').removeAttribute('disabled')
-                        }
+                            if(c.didOpen !== undefined) {
+                                c.didOpen()
+                            }
+                        },
                     })
 
                     // если есть введенные результат

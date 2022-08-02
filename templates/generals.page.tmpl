@@ -34,7 +34,7 @@
     <script>
         document.getElementById("check-availability-button").addEventListener("click", function() {
             let html  = `
-            <form id="check-availablility-form" action="" method="post" novalidate class="needs-validation">
+            <form id="check-availability-form" action="" method="post" novalidate class="needs-validation">
                 <div class="form-row">
                     <div class="col">
                         <div class="form-row" id="reservation-dates-modal">
@@ -52,10 +52,29 @@
             attention.custom({
                 msg: html,
                 title: "Choose your dates",
+                willOpen: () => {
+                    const elem = document.getElementById('reservation-dates-modal')
+                    // добавляет выбор дат в модальное окно
+                    const rp = new DateRangePicker(elem, {
+                        format: 'yyyy-mm-dd',
+                        showOnFocus: true,
+                    })
+                },
                 callback: function(result) {
+
                     console.log("called")
+
+                    let form = document.getElementById('check-availability-form')
+                    // получаем данные из формы
+                    let formData = new FormData(form)
+                    // добавляем CSRFToken
+                    formData.append("csrf_token", "{{.CSRFToken}}")
+
                     // переди по ссылке
-                    fetch('/search-availability-json')
+                    fetch('/search-availability-json', {
+                        method: "post", // метод пост
+                        body: formData, // передаем данные формы
+                    })
                     // затем преобразуй ответ в json
                     .then(response => response.json())
                     // затем выведи данные
@@ -65,7 +84,12 @@
                         console.log(data.message)
                     })
 
-                }});
+                },
+                didOpen: () => {
+                    document.getElementById('start').removeAttribute('disabled')
+                    document.getElementById('end').removeAttribute('disabled')
+                }
+            });
         });
     </script>
 {{end}}
