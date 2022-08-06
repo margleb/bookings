@@ -114,6 +114,28 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// добавляем в сессию данные бронирования для отображения на странице результатов бронирования
+	m.App.Session.Put(r.Context(), "reservation", reservation)
+
+	// делаем редирект на страницу /reservation-main
+	http.Redirect(w, r, "/reservation-summary", http.StatusSeeOther)
+
+}
+
+// ReservationSummary - страница результатов бронирования
+func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) {
+
+	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		log.Println("Can't get the from session data")
+	}
+
+	data := make(map[string]interface{})
+	data["reservation"] = reservation
+
+	render.RenderTemplate(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
 }
 
 // Generals renders the room page

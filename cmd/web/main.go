@@ -1,9 +1,11 @@
 package main
 
 import (
+	"encoding/gob"
 	"github.com/alexedwards/scs/v2"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/handlers"
+	"github.com/margleb/booking/internal/models"
 	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
@@ -21,6 +23,9 @@ var session *scs.SessionManager
 
 // main is the main application function
 func main() {
+
+	// уточняем какого типа данные мы хотим хранить в сессии
+	gob.Register(models.Reservation{})
 
 	app.InProduction = false // находится ли сайт в продакшене
 
