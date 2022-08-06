@@ -70,6 +70,38 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
 // PostReservation - пост запрос из формы
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
+	// если не получается спарсить данные формы
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// Reservation - сохраняем данные из формы
+	reservation := models.Reservation{
+		FirstName: r.Form.Get("first_name"),
+		LastName:  r.Form.Get("last_name"),
+		Phone:     r.Form.Get("phone"),
+		Email:     r.Form.Get("email"),
+	}
+
+	// Возращаем новый поинтер формы
+	form := forms.New(r.PostForm)
+
+	// проверям, не пустое ли значение first_name
+	form.Has("first_name", r)
+
+	// если есть ошибки валидации
+	if !form.Valid() {
+		data := make(map[string]interface{})
+		data["reservation"] = reservation
+
+		render.RenderTemplate(w, r, "make-reservation.page.tmpl", &models.TemplateData{
+			Form: form, // по умолчанию ошибок валидации нет
+			Data: data,
+		})
+		return
+	}
 
 }
 
