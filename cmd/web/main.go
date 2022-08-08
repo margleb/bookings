@@ -24,6 +24,28 @@ var session *scs.SessionManager
 // main is the main application function
 func main() {
 
+	// пробуем запустить приложение
+	err := run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// создаем сервер
+	srv := &http.Server{
+		Addr:    portNumber,
+		Handler: routes(&app),
+	}
+
+	// запускаем его
+	err = srv.ListenAndServe()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+// run - функция позволяющая проводить тестирование
+func run() error {
 	// уточняем какого типа данные мы хотим хранить в сессии
 	gob.Register(models.Reservation{})
 
@@ -41,7 +63,7 @@ func main() {
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("Cannot create tmp cache")
-
+		return err
 	}
 	// сохраняем его в гл. переменную TemplateCache
 	app.TemplateCache = tc
@@ -52,16 +74,5 @@ func main() {
 
 	render.NewTemplates(&app)
 
-	// создаем сервер
-	srv := &http.Server{
-		Addr:    portNumber,
-		Handler: routes(&app),
-	}
-
-	// запускаем его
-	err = srv.ListenAndServe()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	return nil
 }
