@@ -128,7 +128,15 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) 
 	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		log.Println("Can't get the from session data")
+		// если не получилось взять данные из формы, то добавляем ошибку в сессию
+		m.App.Session.Put(r.Context(), "error", "Can't get reservation from session")
+		// а также добавляем редирект на главную
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		return
 	}
+
+	// удаляем из сессии reservation
+	m.App.Session.Remove(r.Context(), "reservation")
 
 	data := make(map[string]interface{})
 	data["reservation"] = reservation

@@ -24,7 +24,13 @@ func NewTemplates(a *config.AppConfig) {
 
 // AddDefaultData передает в шаблоны данные по умолчанию
 func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateData {
+	// по умолчанию генерируется CSRFToken
 	td.CSRFToken = nosurf.Token(r)
+	// а также значения для сессии
+	td.Flash = app.Session.PopString(r.Context(), "flash")
+	td.Error = app.Session.PopString(r.Context(), "error")
+	td.Warning = app.Session.PopString(r.Context(), "warning")
+
 	return td
 }
 
