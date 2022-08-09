@@ -52,7 +52,7 @@ func getRoutes() http.Handler {
 	}
 	// сохраняем его в гл. переменную TemplateCache
 	app.TemplateCache = tc
-	app.UseCache = true
+	app.UseCache = false // не используем кеш данных
 
 	repo := NewRepo(&app)
 	NewHandlers(repo)
@@ -66,7 +66,7 @@ func getRoutes() http.Handler {
 	// посредник - просто пишет в консоль
 	// mux.Use(WriteToConsole)
 	// посредник - устанавливаем CSRF токен
-	mux.Use(NoSurf)
+	// mux.Use(NoSurf) - СSRF токены в тестах не нужны
 	// посредник - позволяет использовать сессии
 	mux.Use(SessionLoad)
 
