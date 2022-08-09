@@ -17,6 +17,9 @@ var functions = template.FuncMap{}
 
 var app *config.AppConfig
 
+// статически прописанный путь до шаблонов
+var pathToTemplates = "./templates"
+
 // NewTemplates sets the config for the template package
 func NewTemplates(a *config.AppConfig) {
 	app = a
@@ -74,7 +77,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 	myCache := map[string]*template.Template{}
 
 	// сканируем все страницы *.page.tmp
-	pages, err := filepath.Glob("./templates/*.page.tmpl")
+	pages, err := filepath.Glob(fmt.Sprintf("%s/*.page.tmpl", pathToTemplates))
 	if err != nil {
 		return myCache, err
 	}
@@ -92,7 +95,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 		}
 
 		// сканируем все страницы c *.layouts.tmp
-		matches, err := filepath.Glob("./templates/*.layout.tmpl")
+		matches, err := filepath.Glob(fmt.Sprintf("%s/*.layout.tmpl", pathToTemplates))
 		if err != nil {
 			return myCache, err
 		}
@@ -100,7 +103,7 @@ func CreateTemplateCache() (map[string]*template.Template, error) {
 		// если есть шаблоны, то парсим их
 		if len(matches) > 0 {
 			// парсим к странице конкретный шаблон
-			ts, err = ts.ParseGlob("./templates/*.layout.tmpl")
+			ts, err = ts.ParseGlob(fmt.Sprintf("%s/*.layout.tmpl", pathToTemplates))
 			if err != nil {
 				return myCache, err
 			}
