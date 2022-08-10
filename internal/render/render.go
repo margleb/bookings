@@ -2,11 +2,11 @@ package render
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/justinas/nosurf"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/models"
-	"log"
 	"net/http"
 	"path/filepath"
 	"text/template"
@@ -37,7 +37,7 @@ func AddDefaultData(td *models.TemplateData, r *http.Request) *models.TemplateDa
 	return td
 }
 
-func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) {
+func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *models.TemplateData) error {
 
 	var tc map[string]*template.Template
 	//  если необходимо использовать кеш
@@ -52,7 +52,7 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *mod
 	t, ok := tc[tmpl]
 	// если шаблон не найден
 	if !ok {
-		log.Fatal("Could not get template from template cache")
+		return errors.New("can't find cache template")
 	}
 
 	buf := new(bytes.Buffer)
@@ -65,9 +65,10 @@ func RenderTemplate(w http.ResponseWriter, r *http.Request, tmpl string, td *mod
 	// записываем его в ответ
 	_, err := buf.WriteTo(w)
 	if err != nil {
-		fmt.Println("Error writing template to browser", err)
+		return err
 	}
 
+	return nil
 }
 
 // CreateTemplateCache создаем кеш шаблона как map

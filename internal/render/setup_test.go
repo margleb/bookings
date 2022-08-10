@@ -39,3 +39,22 @@ func TestMain(m *testing.M) {
 	// запускаем тесты, перед закрытием
 	os.Exit(m.Run())
 }
+
+// myWriter для функции TestRenderTemplate
+type myWriter struct{}
+
+// три интерфеса  содержащиеся в ResponseWriter
+
+func (tw *myWriter) Header() http.Header {
+	var h http.Header
+	return h
+}
+
+func (tw *myWriter) Write(b []byte) (int, error) {
+	length := len(b)
+	return length, nil
+}
+
+func (tw *myWriter) WriteHeader(statusCode int) {
+
+}

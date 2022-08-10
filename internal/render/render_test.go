@@ -46,3 +46,50 @@ func getSession() (*http.Request, error) {
 
 	return r, nil
 }
+
+func TestRenderTemplate(t *testing.T) {
+
+	// обязательно переписываем пути относительно папки
+	pathToTemplates = "./../../templates"
+
+	tc, err := CreateTemplateCache()
+	if err != nil {
+		t.Error(err)
+	}
+	app.TemplateCache = tc
+
+	// реквест для RenderTemplate
+	r, err := getSession()
+	if err != nil {
+		t.Error(err)
+	}
+
+	// ResponseWriter c необходимыми интерфесами
+	var ww myWriter
+
+	err = RenderTemplate(&ww, r, "home.page.tmpl", &models.TemplateData{})
+	if err != nil {
+		t.Error("error writing template to browser")
+	}
+
+	err = RenderTemplate(&ww, r, "not-existed.page.tmpl", &models.TemplateData{})
+	if err == nil {
+		t.Error("has to be error but haven't")
+	}
+
+}
+
+func TestNewTemplates(t *testing.T) {
+	NewTemplates(app)
+}
+
+func TestCreateTemplateCache(t *testing.T) {
+
+	// обязательно переписываем пути относительно папки
+	pathToTemplates = "./../../templates"
+
+	_, err := CreateTemplateCache()
+	if err != nil {
+		t.Error("creating tmpl cache failed")
+	}
+}
