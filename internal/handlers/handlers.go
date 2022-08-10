@@ -98,7 +98,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	// form.Has("first_name", r)
 	form.Required("first_name", "last_name", "email", "phone")
 	// мин длина имени - три символа
-	form.MinLength("first_name", 3, r)
+	form.MinLength("first_name", 3)
 	// проверяем, является ли email значение
 	form.IsEmail("email")
 

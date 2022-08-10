@@ -3,7 +3,6 @@ package forms
 import (
 	"fmt"
 	"github.com/asaskevich/govalidator"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -38,8 +37,8 @@ func (f *Form) Required(fields ...string) {
 }
 
 // Has - проверят что поле не является пустым
-func (f *Form) Has(field string, r *http.Request) bool {
-	x := r.Form.Get(field) // получаем поле
+func (f *Form) Has(field string) bool {
+	x := f.Get(field) // получаем поле
 	if x == "" {
 		// добавляем сообщение об ошибке
 		f.Errors.Add(field, "This field cannot bе blank")
@@ -49,10 +48,10 @@ func (f *Form) Has(field string, r *http.Request) bool {
 }
 
 // MinLength - минимальная длина значений поля
-func (f *Form) MinLength(field string, length int, r *http.Request) bool {
+func (f *Form) MinLength(field string, length int) bool {
 
 	// 1. получаем значение из формы
-	x := r.Form.Get(field)
+	x := f.Get(field)
 	// 2. если полученное значение меньше длины
 	if len(x) < length {
 		f.Errors.Add(field, fmt.Sprintf("This field must be at least %d characters long", length))
