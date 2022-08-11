@@ -5,10 +5,12 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/handlers"
+	"github.com/margleb/booking/internal/helpers"
 	"github.com/margleb/booking/internal/models"
 	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -20,6 +22,12 @@ var app config.AppConfig
 
 // сессии (указываются в конфиге)
 var session *scs.SessionManager
+
+// клиентские ошибки
+var InfoLog *log.Logger
+
+// серверные ошибки
+var ErrorLog *log.Logger
 
 // main is the main application function
 func main() {
@@ -51,6 +59,14 @@ func run() error {
 
 	app.InProduction = false // находится ли сайт в продакшене
 
+	// инициализация клиентского лога
+	InfoLog = log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = InfoLog
+
+	// инициализация серверного лога
+	ErrorLog = log.New(os.Stdout, "Error\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = ErrorLog
+
 	session = scs.New()                            // новая сессия
 	session.Lifetime = 24 * time.Hour              // 24 часа
 	session.Cookie.Persist = true                  // должны ли cookie оставаться после закрытия
@@ -71,8 +87,8 @@ func run() error {
 
 	repo := handlers.NewRepo(&app)
 	handlers.NewHandlers(repo)
-
 	render.NewTemplates(&app)
+	helpers.NewHelpers(&app)
 
 	return nil
 }
