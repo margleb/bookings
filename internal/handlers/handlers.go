@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/forms"
+	"github.com/margleb/booking/internal/helpers"
 	"github.com/margleb/booking/internal/models"
 	"github.com/margleb/booking/internal/render"
 	"log"
@@ -34,31 +35,13 @@ func NewHandlers(r *Repository) {
 // Home is the home page handler
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 
-	// берем ip адрес поль-ля
-	remoteIP := r.RemoteAddr
-	// помещаем его в config c сессиями
-	m.App.Session.Put(r.Context(), "remote_ip", remoteIP)
-
 	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{})
 }
 
 // About is the about page handler
 func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 
-	// подготовка данных для передачи в шаблон
-	stringMap := make(map[string]string)
-	stringMap["example"] = "Hello, world"
-
-	// получаем из конфига значение сессии
-	// делаем явное преобразование к строке
-	remoteIP := m.App.Session.GetString(r.Context(), "remote_ip")
-
-	// добавляем значение сессии в stringMap
-	stringMap["remote_ip"] = remoteIP
-
-	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{
-		StringMap: stringMap,
-	})
+	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{})
 }
 
 // Reservation renders the make a reservation page and displays form
@@ -79,7 +62,8 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	// если не получается спарсить данные формы
 	err := r.ParseForm()
 	if err != nil {
-		log.Println(err)
+		// запускаем сервеную ошибку
+		helpers.ServerError(w, err)
 		return
 	}
 
@@ -127,7 +111,7 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) 
 
 	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
-		log.Println("Can't get the from session data")
+		m.App.ErrorLog.Println("Can't get error form session")
 		// если не получилось взять данные из формы, то добавляем ошибку в сессию
 		m.App.Session.Put(r.Context(), "error", "Can't get reservation from session")
 		// а также добавляем редирект на главную
@@ -185,6 +169,7 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 	// Преобразуем struct в JSON
 	out, err := json.MarshalIndent(resp, "", "  ")
 	if err != nil {
+		helpers.ServerError(w, err)
 		return
 	}
 
