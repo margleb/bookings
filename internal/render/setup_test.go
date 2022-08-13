@@ -5,6 +5,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/models"
+	"log"
 	"net/http"
 	"os"
 	"testing"
@@ -22,6 +23,14 @@ func TestMain(m *testing.M) {
 
 	// уточняем какого типа данные мы хотим хранить в сессии
 	gob.Register(models.Reservation{})
+
+	// инициализация клиентского лога
+	InfoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	testApp.InfoLog = InfoLog
+
+	// инициализация серверного лога
+	ErrorLog := log.New(os.Stdout, "Error\t", log.Ldate|log.Ltime|log.Lshortfile)
+	testApp.ErrorLog = ErrorLog
 
 	testApp.InProduction = false // находится ли сайт в продакшене
 

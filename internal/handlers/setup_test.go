@@ -12,6 +12,7 @@ import (
 	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -35,6 +36,14 @@ func getRoutes() http.Handler {
 	gob.Register(models.Reservation{})
 
 	app.InProduction = false // находится ли сайт в продакшене
+
+	// инициализация клиентского лога
+	InfoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	app.InfoLog = InfoLog
+
+	// инициализация серверного лога
+	ErrorLog := log.New(os.Stdout, "Error\t", log.Ldate|log.Ltime|log.Lshortfile)
+	app.ErrorLog = ErrorLog
 
 	session = scs.New()                            // новая сессия
 	session.Lifetime = 24 * time.Hour              // 24 часа
