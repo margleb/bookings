@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"github.com/alexedwards/scs/v2"
 	"github.com/margleb/booking/internal/config"
+	"github.com/margleb/booking/internal/driver"
 	"github.com/margleb/booking/internal/handlers"
 	"github.com/margleb/booking/internal/helpers"
 	"github.com/margleb/booking/internal/models"
@@ -33,10 +34,14 @@ var ErrorLog *log.Logger
 func main() {
 
 	// пробуем запустить приложение
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// отложенное завершение подключения к БД
+	log.Println("Connected to database")
+	defer db.SQL.Close()
 
 	// создаем сервер
 	srv := &http.Server{
@@ -53,7 +58,7 @@ func main() {
 }
 
 // run - функция позволяющая проводить тестирование
-func run() error {
+func run() (*driver.DB, error) {
 	// уточняем какого типа данные мы хотим хранить в сессии
 	gob.Register(models.Reservation{})
 
@@ -75,20 +80,28 @@ func run() error {
 
 	app.Session = session // устанавливаем в конфиг сессии
 
+	// устанавливаем соединение с базой данных
+	log.Println("Connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=marglebdm")
+	if err != nil {
+		log.Fatal("Cannot connect to database. Dying...")
+		return nil, err
+	}
+
 	// получаем кеш шаблонов
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal("Cannot create tmp cache")
-		return err
+		return nil, err
 	}
 	// сохраняем его в гл. переменную TemplateCache
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
 	render.NewTemplates(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }

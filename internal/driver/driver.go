@@ -11,7 +11,7 @@ import (
 
 // DB соединение с базой данных
 type DB struct {
-	DB *sql.DB
+	SQL *sql.DB
 }
 
 // Переменная соединения
@@ -41,7 +41,7 @@ func ConnectSQL(dns string) (*DB, error) {
 	d.SetConnMaxLifetime(maxConnLifetime)
 
 	// присваиваем в объект соединение
-	dbConn.DB = d
+	dbConn.SQL = d
 
 	// тестируем соединение
 	err = TestConn(d)
