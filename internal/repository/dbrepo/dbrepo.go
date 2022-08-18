@@ -31,7 +31,7 @@ func (p *postgresDbRepo) InsertReservation(res models.Reservation) error {
 	defer cancel()
 
 	// добавляем в базу данных значение
-	stmt := `insert into reservations (first_name, last_name, email, phone, start_date, end_date, room_id, created_at, updated_at) values ($1, $2, $3, $4, $5, $6, $7, $8. $9)`
+	stmt := `insert into reservations (first_name, last_name, email, phone, start_date, end_date, room_id, created_at, updated_at) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning id`
 	_, err := p.DB.ExecContext(ctx, stmt,
 		res.FirstName,
 		res.LastName,
@@ -41,7 +41,8 @@ func (p *postgresDbRepo) InsertReservation(res models.Reservation) error {
 		res.EndDate,
 		res.RoomID,
 		time.Now(),
-		time.Now())
+		time.Now(),
+	)
 
 	if err != nil {
 		return err

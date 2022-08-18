@@ -78,7 +78,8 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	sd := r.Form.Get("start_date")
 	ed := r.Form.Get("end_date")
 
-	layout := "2006-08-11"
+	// 2006-01-02 -- 01/02 03:04:05PM '06 -0700
+	layout := "2006-01-02"
 
 	startDate, err := time.Parse(layout, sd)
 	if err != nil {
@@ -134,6 +135,8 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		helpers.ServerError(w, err)
 	}
+
+	// добавляем ограничение по данной комнате
 
 	// добавляем в сессию данные бронирования для отображения на странице результатов бронирования
 	m.App.Session.Put(r.Context(), "reservation", reservation)
