@@ -84,16 +84,19 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	startDate, err := time.Parse(layout, sd)
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 	endDate, err := time.Parse(layout, ed)
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 
 	// конвертируем room_id в int формат
 	roomId, err := strconv.Atoi(r.Form.Get("room_id"))
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
 	}
 
 	// Reservation - сохраняем данные из формы
@@ -131,12 +134,26 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// добавляем в базу данных
-	err = m.DB.InsertReservation(reservation)
+	newReservationID, err := m.DB.InsertReservation(reservation)
 	if err != nil {
 		helpers.ServerError(w, err)
+		return
+	}
+
+	restriction := models.RoomRestriction{
+		StartDate:     startDate,
+		EndDate:       endDate,
+		RoomID:        roomId,
+		ReservationID: newReservationID,
+		RestrictionID: 1,
 	}
 
 	// добавляем ограничение по данной комнате
+	err = m.DB.InsertRoomRestriction(restriction)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
 
 	// добавляем в сессию данные бронирования для отображения на странице результатов бронирования
 	m.App.Session.Put(r.Context(), "reservation", reservation)
