@@ -71,3 +71,32 @@ func (m *postgresDbRepo) InsertRoomRestriction(r models.RoomRestriction) error {
 
 	return nil
 }
+
+// SearchAvailabilityByDates - проверяем, свободна ли комната на данный диапазон дат
+func (m *postgresDbRepo) SearchAvailabilityByDates(start, end time.Time, roomId int) (bool, error) {
+
+	// время выполнения запроса не более трех секунд
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// запрос к базе данных
+	query := `select count(*) from room_restrictions where room_id = $1 and $1 < end_date and $2 > start_date`
+
+	// кол-во полученных строк
+	var numRows int
+
+	// выполняем запрос к базе
+	row := m.DB.QueryRowContext(ctx, query, roomId, start, end)
+	err := row.Scan(&numRows)
+	if err != nil {
+		return false, err
+	}
+
+	// если комната свободная
+	if numRows == 0 {
+		return true, nil
+	} else {
+		return false, nil
+	}
+
+}
