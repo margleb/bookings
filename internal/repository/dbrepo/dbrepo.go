@@ -6,6 +6,7 @@ import (
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/models"
 	"github.com/margleb/booking/internal/repository"
+	"log"
 	"time"
 )
 
@@ -72,8 +73,8 @@ func (m *postgresDbRepo) InsertRoomRestriction(r models.RoomRestriction) error {
 	return nil
 }
 
-// SearchAvailabilityByDates - проверяем, свободна ли комната на данный диапазон дат
-func (m *postgresDbRepo) SearchAvailabilityByDates(start, end time.Time, roomId int) (bool, error) {
+// SearchAvailabilityByDatesByRoomID - проверяем, свободна ли комната на данный диапазон дат
+func (m *postgresDbRepo) SearchAvailabilityByDatesByRoomID(start, end time.Time, roomId int) (bool, error) {
 
 	// время выполнения запроса не более трех секунд
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -99,4 +100,42 @@ func (m *postgresDbRepo) SearchAvailabilityByDates(start, end time.Time, roomId 
 		return false, nil
 	}
 
+}
+
+// SearchAvailabilityForAllRooms - возвращает slice доступных комнат для бронирования
+func (m *postgresDbRepo) SearchAvailabilityForAllRooms(start, end time.Time) ([]models.Room, error) {
+
+	// время выполнения запроса не более трех секунд
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var rooms []models.Room
+
+	// запрос
+	query := `select r.id, r.room_name from rooms r where
+	r.id not in (select rr.room_id from room_restrictions rr where $1 < rr.end_date and $2 > rr.start_date)`
+
+	// выполняем запрос
+	rows, err := m.DB.QueryContext(ctx, query, start, end)
+	if err != nil {
+		return rooms, err
+	}
+
+	// проходимся циклом и добавляем комнаты в slice
+	for rows.Next() {
+
+		var room models.Room
+		err := rows.Scan(&room.ID, &room.RoomName)
+		if err != nil {
+			return rooms, err
+		}
+
+		if err = rows.Err(); err != nil {
+			log.Fatal("Error scanning rows", err)
+		}
+
+		rooms = append(rooms, room)
+	}
+
+	return rooms, nil
 }
