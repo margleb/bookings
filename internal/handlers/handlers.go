@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/driver"
 	"github.com/margleb/booking/internal/forms"
@@ -206,7 +205,59 @@ func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
 func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
-	_, _ = w.Write([]byte(fmt.Sprintf("Started date: %s, ended date: %s", start, end)))
+
+	// конвертируем в time.Time
+	layout := "2006-01-02"
+
+	startDate, err := time.Parse(layout, start)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	endDate, err := time.Parse(layout, end)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// получаем список доступных комнат
+	rooms, err := m.DB.SearchAvailabilityForAllRooms(startDate, endDate)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// выводим циклом доступные комнаты
+	// for _, i := range rooms {
+	//	m.App.InfoLog.Println("Room:", i.ID, i.RoomName)
+	//}
+
+	// если нет ни одной доступной комнаты
+	if len(rooms) == 0 {
+		// m.App.InfoLog.Println("No Avail")
+		// Выводим сообщение о том, что нет свободных номеров
+		m.App.Session.Put(r.Context(), "error", "No availability")
+		http.Redirect(w, r, "/search-availability", http.StatusSeeOther)
+		return
+	}
+
+	// если есть свободные комнаты
+	data := make(map[string]interface{})
+	data["rooms"] = rooms
+
+	res := models.Reservation{
+		StartDate: startDate,
+		EndDate:   endDate,
+	}
+
+	// сохраняем в сессию даты, чтобы передать на страницу бронирования
+	m.App.Session.Put(r.Context(), "reservation", res)
+
+	// передаем их в шаблон
+	render.Template(w, r, "choose-room.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
+
 }
 
 type jsonResponse struct {
