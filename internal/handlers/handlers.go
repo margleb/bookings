@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/driver"
 	"github.com/margleb/booking/internal/forms"
@@ -293,4 +294,33 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 // Contact is the about page handler
 func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "contact.page.tmpl", &models.TemplateData{})
+}
+
+func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
+
+	// получаем id комнаты из ссылки, конвертируем строку в int
+	roomID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// m.App.Session.Get(r.Context(), "reservation")
+
+	// получаем Reservation значения из сесси
+	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// добавляем id комнаты в reservation
+	res.RoomID = roomID
+
+	// помещаем снова reservation в сессию
+	m.App.Session.Put(r.Context(), "reservation", res)
+
+	// делаем редирект на make-reservation, но уже с датами из сессии и id комнаты
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+
 }
