@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/driver"
@@ -54,13 +55,38 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 // Reservation renders the make a reservation page and displays form
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
-	var reservation models.Reservation
+	// получаем Reservation значения из сесси
+	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("cannot get reservation from session"))
+		return
+	}
+
+	// получаем информацию о комнате
+	room, err := m.DB.GetRoomByID(res.RoomID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	// указываем имя комнаты которая забронирована
+	res.Room.RoomName = room.RoomName
+
+	// делаем кастинг обратно в строку
+	sd := res.StartDate.Format("2006-01-02")
+	ed := res.EndDate.Format("2006-01-02")
+
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
+
 	data := make(map[string]interface{})
-	data["reservation"] = reservation
+	data["reservation"] = res
 
 	render.Template(w, r, "make-reservation.page.tmpl", &models.TemplateData{
-		Form: forms.New(nil), // по умолчанию ошибок валидации нет
-		Data: data,           // при get запросе передаем пустое значение
+		Form:      forms.New(nil), // по умолчанию ошибок валидации нет
+		Data:      data,           // при get запросе передаем пустое значение
+		StringMap: stringMap,
 	})
 }
 
