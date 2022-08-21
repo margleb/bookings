@@ -72,6 +72,9 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 	// указываем имя комнаты которая забронирована
 	res.Room.RoomName = room.RoomName
 
+	// помещаем обновленную версию в сессию
+	m.App.Session.Put(r.Context(), "reservation", res)
+
 	// делаем кастинг обратно в строку
 	sd := res.StartDate.Format("2006-01-02")
 	ed := res.EndDate.Format("2006-01-02")
@@ -92,54 +95,66 @@ func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
 // PostReservation - пост запрос из формы
 func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
-	// если не получается спарсить данные формы
+
+	// 1. получаем данные бронирования из cессииы
+	reservation, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
+	if !ok {
+		helpers.ServerError(w, errors.New("can't get from session"))
+		return
+	}
+
+	// если не получается спарсить данные формы, то возвращаем ошибку
 	err := r.ParseForm()
 	if err != nil {
-		// запускаем сервеную ошибку
+		// запускаем серверную ошибку
 		helpers.ServerError(w, err)
 		return
 	}
 
 	// конвертируем start/end date в правильный формат
-	sd := r.Form.Get("start_date")
-	ed := r.Form.Get("end_date")
+	//sd := r.Form.Get("start_date")
+	//ed := r.Form.Get("end_date")
 
-	// 2006-01-02 -- 01/02 03:04:05PM '06 -0700
-	layout := "2006-01-02"
-
-	startDate, err := time.Parse(layout, sd)
-	if err != nil {
-		helpers.ServerError(w, err)
-		return
-	}
-	endDate, err := time.Parse(layout, ed)
-	if err != nil {
-		helpers.ServerError(w, err)
-		return
-	}
-
-	// конвертируем room_id в int формат
-	roomId, err := strconv.Atoi(r.Form.Get("room_id"))
-	if err != nil {
-		helpers.ServerError(w, err)
-		return
-	}
+	//// 2006-01-02 -- 01/02 03:04:05PM '06 -0700
+	// layout := "2006-01-02"
+	//startDate, err := time.Parse(layout, sd)
+	//if err != nil {
+	//	helpers.ServerError(w, err)
+	//	return
+	//}
+	//endDate, err := time.Parse(layout, ed)
+	//if err != nil {
+	//	helpers.ServerError(w, err)
+	//	return
+	//}
+	//
+	//// конвертируем room_id в int формат
+	//roomId, err := strconv.Atoi(r.Form.Get("room_id"))
+	//if err != nil {
+	//	helpers.ServerError(w, err)
+	//	return
+	//}
 
 	// Reservation - сохраняем данные из формы
-	reservation := models.Reservation{
-		FirstName: r.Form.Get("first_name"),
-		LastName:  r.Form.Get("last_name"),
-		Email:     r.Form.Get("email"),
-		Phone:     r.Form.Get("phone"),
-		StartDate: startDate,
-		EndDate:   endDate,
-		RoomID:    roomId,
-	}
+	reservation.FirstName = r.Form.Get("first_name")
+	reservation.LastName = r.Form.Get("last_name")
+	reservation.Phone = r.Form.Get("phone")
+	reservation.Email = r.Form.Get("email")
 
-	// Возращаем новый поинтер формы
+	//reservation := models.Reservation{
+	//	FirstName: r.Form.Get("first_name"),
+	//	LastName:  r.Form.Get("last_name"),
+	//	Email:     r.Form.Get("email"),
+	//	Phone:     r.Form.Get("phone"),
+	//	StartDate: startDate,
+	//	EndDate:   endDate,
+	//	RoomID:    roomId,
+	//}
+
+	// Возвращаем новый поинтер формы
 	form := forms.New(r.PostForm)
 
-	// проверям, не пустое ли значение first_name
+	// проверяем, не пустое ли значение first_name
 	// form.Has("first_name", r)
 	form.Required("first_name", "last_name", "email", "phone")
 	// мин длина имени - три символа
@@ -167,9 +182,9 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	restriction := models.RoomRestriction{
-		StartDate:     startDate,
-		EndDate:       endDate,
-		RoomID:        roomId,
+		StartDate:     reservation.StartDate,
+		EndDate:       reservation.EndDate,
+		RoomID:        reservation.RoomID,
 		ReservationID: newReservationID,
 		RestrictionID: 1,
 	}
@@ -208,8 +223,15 @@ func (m *Repository) ReservationSummary(w http.ResponseWriter, r *http.Request) 
 	data := make(map[string]interface{})
 	data["reservation"] = reservation
 
+	sd := reservation.StartDate.Format("2006-01-02")
+	ed := reservation.EndDate.Format("2006-01-02")
+	stringMap := make(map[string]string)
+	stringMap["start_date"] = sd
+	stringMap["end_date"] = ed
+
 	render.Template(w, r, "reservation-summary.page.tmpl", &models.TemplateData{
-		Data: data,
+		Data:      data,
+		StringMap: stringMap,
 	})
 }
 
@@ -230,12 +252,14 @@ func (m *Repository) Availability(w http.ResponseWriter, r *http.Request) {
 
 // PostAvailability is the about page handler
 func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
+
+	// 1. получаем данные из формы start/end
 	start := r.Form.Get("start")
 	end := r.Form.Get("end")
 
-	// конвертируем в time.Time
 	layout := "2006-01-02"
 
+	// 2. конвертируем из строки в необходимый формат
 	startDate, err := time.Parse(layout, start)
 	if err != nil {
 		helpers.ServerError(w, err)
@@ -247,7 +271,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// получаем список доступных комнат
+	// 3. получаем список доступных комнат
 	rooms, err := m.DB.SearchAvailabilityForAllRooms(startDate, endDate)
 	if err != nil {
 		helpers.ServerError(w, err)
@@ -259,7 +283,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	//	m.App.InfoLog.Println("Room:", i.ID, i.RoomName)
 	//}
 
-	// если нет ни одной доступной комнаты
+	// 3. если нет ни одной доступной комнаты
 	if len(rooms) == 0 {
 		// m.App.InfoLog.Println("No Avail")
 		// Выводим сообщение о том, что нет свободных номеров
@@ -268,7 +292,7 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// если есть свободные комнаты
+	// 3. если есть свободные комнаты
 	data := make(map[string]interface{})
 	data["rooms"] = rooms
 
@@ -277,10 +301,10 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 		EndDate:   endDate,
 	}
 
-	// сохраняем в сессию даты, чтобы передать на страницу бронирования
+	// 4. сохраняем в сессию даты, чтобы передать на страницу бронирования
 	m.App.Session.Put(r.Context(), "reservation", res)
 
-	// передаем их в шаблон
+	// 5. генерируем шаблон выбора доступных комнат
 	render.Template(w, r, "choose-room.page.tmpl", &models.TemplateData{
 		Data: data,
 	})
