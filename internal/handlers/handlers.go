@@ -319,10 +319,27 @@ type jsonResponse struct {
 // AvailabilityJSON обрабатывает JSON запросы
 func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 
-	// Пример JSON
+	// 1. Получаем из формы значение начало/конца бронирования
+	sd := r.Form.Get("start")
+	ed := r.Form.Get("end")
+
+	// 2. Конвертируем из строки в дату
+	layout := "2006-01-02"
+	startDate, _ := time.Parse(layout, sd)
+	endDate, _ := time.Parse(layout, ed)
+
+	// 3. Конвертируем room_id из строки в int значение
+	roomID, _ := strconv.Atoi(r.Form.Get("room_id"))
+
+	// 4. Проверяем, доступна ли комната в данный диапазон дат
+	available, err := m.DB.SearchAvailabilityByDatesByRoomID(startDate, endDate, roomID)
+	if err != nil {
+		helpers.ServerError(w, err)
+	}
+
 	resp := jsonResponse{
-		OK:      true,
-		Message: "Available",
+		OK:      available,
+		Message: "",
 	}
 
 	// Преобразуем struct в JSON

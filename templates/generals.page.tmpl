@@ -58,6 +58,7 @@
                     const rp = new DateRangePicker(elem, {
                         format: 'yyyy-mm-dd',
                         showOnFocus: true,
+                        minDate: new Date(), // не позволяет выбирать дату раньше текущей
                     })
                 },
                 callback: function(result) {
@@ -69,6 +70,7 @@
                     let formData = new FormData(form)
                     // добавляем CSRFToken
                     formData.append("csrf_token", "{{.CSRFToken}}")
+                    formData.append("room_id", "1");
 
                     // переди по ссылке
                     fetch('/search-availability-json', {
@@ -79,9 +81,11 @@
                     .then(response => response.json())
                     // затем выведи данные
                     .then(data => {
-                        console.log(data)
-                        console.log(data.ok)
-                        console.log(data.message)
+                        if (data.ok) {
+                            console.log("room is available")
+                        } else {
+                            console.log("room is not available")
+                        }
                     })
 
                 },
