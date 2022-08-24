@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -312,8 +313,11 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 }
 
 type jsonResponse struct {
-	OK      bool   `json:"ok"`
-	Message string `json:"message"`
+	OK        bool   `json:"ok"`
+	Message   string `json:"message"`
+	RoomID    int    `json:"roomID"`
+	StartDate string `json:"startDate"`
+	EndDate   string `json:"endDate"`
 }
 
 // AvailabilityJSON обрабатывает JSON запросы
@@ -340,6 +344,18 @@ func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
 	resp := jsonResponse{
 		OK:      available,
 		Message: "",
+	}
+
+	// если комната свободна, то передаем еще данные
+	if available {
+
+		// переводим в строку из даты, обрезаем не нужное
+		stD := strings.Split(startDate.String(), " ")[0]
+		enD := strings.Split(endDate.String(), " ")[0]
+
+		resp.RoomID = roomID
+		resp.StartDate = stD
+		resp.EndDate = enD
 	}
 
 	// Преобразуем struct в JSON

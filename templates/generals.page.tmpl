@@ -72,7 +72,7 @@
                     formData.append("csrf_token", "{{.CSRFToken}}")
                     formData.append("room_id", "1");
 
-                    // переди по ссылке
+                    // перейди по ссылке
                     fetch('/search-availability-json', {
                         method: "post", // метод пост
                         body: formData, // передаем данные формы
@@ -82,9 +82,14 @@
                     // затем выведи данные
                     .then(data => {
                         if (data.ok) {
-                            console.log("room is available")
+                            // alert(JSON.stringify(data, null, 4));
+                            // console.log("room is available")
+
+                            let link = "<a class='book-now-btn' href='/book-room?id="+ data.roomID + "&s="+ data.startDate +"&e="+ data.endDate +"'>Book now!</a>"
+
+                            notifyModal("Room is available", "", "success", true, link, true)
                         } else {
-                            console.log("room is not available")
+                            notifyModal("Room is not available", "", "error", false, "", true)
                         }
                     })
 

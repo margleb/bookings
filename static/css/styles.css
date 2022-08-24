@@ -16,3 +16,12 @@
 .datepicker {
     z-index: 10000;
 }
+
+.book-now-btn {
+    color:white;
+}
+
+.book-now-btn:hover {
+    color:white;
+    text-decoration: none;
+}

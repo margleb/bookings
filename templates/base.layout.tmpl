@@ -113,12 +113,14 @@
                 })
             }
             // modal window
-            function notifyModal(title, text, icon, confirmationButtonText) {
+            function notifyModal(title, text, icon, showConfirmButton = false, confirmationButtonText, showCancelButton = false) {
                 Swal.fire({
                     title: title,
                     html: text,
                     icon: icon,
-                    confirmButtonText: confirmationButtonText
+                    showConfirmButton: showConfirmButton,
+                    confirmButtonText: confirmationButtonText,
+                    showCancelButton: showCancelButton,
                 })
             }
 
