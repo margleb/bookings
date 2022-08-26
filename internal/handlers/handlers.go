@@ -56,7 +56,7 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 // Reservation renders the make a reservation page and displays form
 func (m *Repository) Reservation(w http.ResponseWriter, r *http.Request) {
 
-	// получаем Reservation значения из сесси
+	// получаем Reservation значения из сессии
 	res, ok := m.App.Session.Get(r.Context(), "reservation").(models.Reservation)
 	if !ok {
 		helpers.ServerError(w, errors.New("cannot get reservation from session"))
@@ -379,6 +379,7 @@ func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "contact.page.tmpl", &models.TemplateData{})
 }
 
+// ChooseRoom display of available rooms
 func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
 
 	// получаем id комнаты из ссылки, конвертируем строку в int
@@ -404,6 +405,43 @@ func (m *Repository) ChooseRoom(w http.ResponseWriter, r *http.Request) {
 	m.App.Session.Put(r.Context(), "reservation", res)
 
 	// делаем редирект на make-reservation, но уже с датами из сессии и id комнаты
+	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
+
+}
+
+// BookRoom takes Url parameters, builds a sessional variable, and takes user to make res screen
+func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
+
+	// 1. получаем данные из url id, s, e
+	roomID, _ := strconv.Atoi(r.URL.Query().Get("id"))
+	sd := r.URL.Query().Get("s")
+	ed := r.URL.Query().Get("e")
+
+	// 2. конвертируем в тип данных date
+	layout := "2006-01-02"
+	startDate, _ := time.Parse(layout, sd)
+	endDate, _ := time.Parse(layout, ed)
+
+	// 3. получаем информацию о комнате
+	room, err := m.DB.GetRoomByID(roomID)
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+	// 4. Создаем объект с данными id, начало/конец даты
+	var res models.Reservation
+
+	res.RoomID = roomID
+	res.StartDate = startDate
+	res.EndDate = endDate
+
+	// указываем имя комнаты которая забронирована
+	res.Room.RoomName = room.RoomName
+
+	// 5. кладем в сессию данные
+	m.App.Session.Put(r.Context(), "reservation", res)
+
+	// 6. Делаем ридирект на страницу /make-reservation
 	http.Redirect(w, r, "/make-reservation", http.StatusSeeOther)
 
 }
