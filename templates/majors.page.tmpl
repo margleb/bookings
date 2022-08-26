@@ -34,7 +34,7 @@
     <script>
         document.getElementById("check-availability-button").addEventListener("click", function() {
             let html  = `
-            <form id="check-availablility-form" action="" method="post" novalidate class="needs-validation">
+            <form id="check-availability-form" action="" method="post" novalidate class="needs-validation">
                 <div class="form-row">
                     <div class="col">
                         <div class="form-row" id="reservation-dates-modal">
@@ -49,7 +49,56 @@
                 </div>
             </form>
             `
-            attention.custom({msg: html, title: "Choose your dates"});
+            attention.custom({
+                msg: html,
+                title: "Choose your dates",
+                willOpen: () => {
+                    const elem = document.getElementById('reservation-dates-modal')
+                    // добавляет выбор дат в модальное окно
+                    const rp = new DateRangePicker(elem, {
+                        format: 'yyyy-mm-dd',
+                        showOnFocus: true,
+                        minDate: new Date(), // не позволяет выбирать дату раньше текущей
+                    })
+                },
+                callback: function(result) {
+
+                    console.log("called")
+
+                    let form = document.getElementById('check-availability-form')
+                    // получаем данные из формы
+                    let formData = new FormData(form)
+                    // добавляем CSRFToken
+                    formData.append("csrf_token", "{{.CSRFToken}}")
+                    formData.append("room_id", "2");
+
+                    // перейди по ссылке
+                    fetch('/search-availability-json', {
+                        method: "post", // метод пост
+                        body: formData, // передаем данные формы
+                    })
+                        // затем преобразуй ответ в json
+                        .then(response => response.json())
+                        // затем выведи данные
+                        .then(data => {
+                            if (data.ok) {
+                                // alert(JSON.stringify(data, null, 4));
+                                // console.log("room is available")
+
+                                let link = "<a class='book-now-btn' href='/book-room?id="+ data.roomID + "&s="+ data.startDate +"&e="+ data.endDate +"'>Book now!</a>"
+
+                                notifyModal("Room is available", "", "success", true, link, true)
+                            } else {
+                                notifyModal("Room is not available", "", "error", false, "", true)
+                            }
+                        })
+
+                },
+                didOpen: () => {
+                    document.getElementById('start').removeAttribute('disabled')
+                    document.getElementById('end').removeAttribute('disabled')
+                }
+            });
         });
     </script>
 {{end}}
