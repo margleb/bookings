@@ -7,6 +7,7 @@ import (
 
 // DatabaseRepo интерфейс, содержащий функции для работы с базой данных
 type DatabaseRepo interface {
+	AllUsers() bool
 	InsertReservation(res models.Reservation) (int, error)
 	InsertRoomRestriction(r models.RoomRestriction) error
 	SearchAvailabilityByDatesByRoomID(start, end time.Time, roomId int) (bool, error)

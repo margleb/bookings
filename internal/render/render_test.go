@@ -67,12 +67,12 @@ func TestRenderTemplate(t *testing.T) {
 	// ResponseWriter c необходимыми интерфесами
 	var ww myWriter
 
-	err = RenderTemplate(&ww, r, "home.page.tmpl", &models.TemplateData{})
+	err = Template(&ww, r, "home.page.tmpl", &models.TemplateData{})
 	if err != nil {
 		t.Error("error writing template to browser")
 	}
 
-	err = RenderTemplate(&ww, r, "not-existed.page.tmpl", &models.TemplateData{})
+	err = Template(&ww, r, "not-existed.page.tmpl", &models.TemplateData{})
 	if err == nil {
 		t.Error("has to be error but haven't")
 	}
@@ -80,7 +80,7 @@ func TestRenderTemplate(t *testing.T) {
 }
 
 func TestNewTemplates(t *testing.T) {
-	NewTemplates(app)
+	NewRenderer(app)
 }
 
 func TestCreateTemplateCache(t *testing.T) {
