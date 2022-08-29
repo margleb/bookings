@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"testing"
 	"text/template"
 	"time"
 )
@@ -30,8 +31,9 @@ var pathToTemplates = "./../../templates"
 // функции передаваемые в шаблон
 var functions = template.FuncMap{}
 
-// getRoutes - возращает маршруты
-func getRoutes() http.Handler {
+// TestMain - основная фун-ция запускаемая для тестов
+func TestMain(m *testing.M) {
+
 	// уточняем какого типа данные мы хотим хранить в сессии
 	gob.Register(models.Reservation{})
 
@@ -59,7 +61,7 @@ func getRoutes() http.Handler {
 		log.Fatal("Cannot create tmp cache")
 
 	}
-	// сохраняем его в гл. переменную TemplateCache
+	// Сохраняем его в гл. переменную TemplateCache
 	app.TemplateCache = tc
 	app.UseCache = false // не используем кеш данных
 
@@ -67,6 +69,13 @@ func getRoutes() http.Handler {
 	NewHandlers(repo)
 
 	render.NewRenderer(&app)
+
+	os.Exit(m.Run())
+
+}
+
+// getRoutes - возращает маршруты
+func getRoutes() http.Handler {
 
 	// маршрут
 	mux := chi.NewRouter()
@@ -100,7 +109,7 @@ func getRoutes() http.Handler {
 	// помещаем ее в Handle
 	mux.Handle("/static/*", http.StripPrefix("/static", fileServer))
 
-	// возращаем
+	// возвращаем маршруты
 	return mux
 
 }
