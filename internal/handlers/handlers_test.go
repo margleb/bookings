@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"testing"
 )
 
@@ -18,21 +17,20 @@ type postData struct {
 
 // тестируемые маршруты
 var theTests = []struct {
-	name               string     // название маршрута
-	url                string     // путь до маршрута
-	method             string     // используемый метод в маршруте
-	params             []postData // передаваемые параметры
-	expectedStatusCode int        // ожидаемый статус ответа
+	name               string // название маршрута
+	url                string // путь до маршрута
+	method             string // используемый метод в маршруте
+	expectedStatusCode int    // ожидаемый статус ответа
 }{
 	// GET
-	//{"home", "/", "GET", []postData{}, http.StatusOK},
-	//{"about", "/about", "GET", []postData{}, http.StatusOK},
-	//{"gq", "/generals-quarters", "GET", []postData{}, http.StatusOK},
-	//{"ms", "/majors-suite", "GET", []postData{}, http.StatusOK},
-	//{"sa", "/search-availability", "GET", []postData{}, http.StatusOK},
-	//{"sa", "/search-availability", "GET", []postData{}, http.StatusOK},
-	//{"mr", "/make-reservation", "GET", []postData{}, http.StatusOK},
-	//// POST
+	{"home", "/", "GET", http.StatusOK},
+	{"about", "/about", "GET", http.StatusOK},
+	{"gq", "/generals-quarters", "GET", http.StatusOK},
+	{"ms", "/majors-suite", "GET", http.StatusOK},
+	{"sa", "/search-availability", "GET", http.StatusOK},
+	{"sa", "/search-availability", "GET", http.StatusOK},
+	// {"mr", "/make-reservation", "GET", []postData{}, http.StatusOK},
+	// POST
 	//{"post-search-avail", "/search-availability", "POST", []postData{
 	//	{"start", "2020-01-01"},
 	//	{"end", "2020-01-02"},
@@ -60,37 +58,17 @@ func TestHandlers(t *testing.T) {
 
 	// 3. перебираем каждый тест
 	for _, e := range theTests {
-		// 3.1 для поста и гет запросов
-		if e.method == "GET" {
-			// получаем результат гет запроса
-			res, err := ts.Client().Get(ts.URL + e.url)
-			if err != nil {
-				t.Log(err)
-				t.Fatal(err)
-			}
 
-			// если полученный статус кода не соответсвуте ожидаемому
-			if res.StatusCode != e.expectedStatusCode {
-				t.Errorf("for %s expected %d but got %d", e.name, e.expectedStatusCode, res.StatusCode)
-			}
+		// получаем результат гет запроса
+		res, err := ts.Client().Get(ts.URL + e.url)
+		if err != nil {
+			t.Log(err)
+			t.Fatal(err)
+		}
 
-		} else {
-			// создаем url.Values для передачи их в POST
-			values := url.Values{}
-			for _, x := range e.params {
-				values.Add(x.key, x.value)
-			}
-			// делаем Post запрос
-			res, err := ts.Client().PostForm(ts.URL+e.url, values)
-			if err != nil {
-				t.Log(err)
-				t.Fatal(err)
-			}
-
-			// если полученный статус кода не соответствует ожидаемому
-			if res.StatusCode != e.expectedStatusCode {
-				t.Errorf("for %s expected %d but got %d", e.name, e.expectedStatusCode, res.StatusCode)
-			}
+		// если полученный статус кода не соответсвуте ожидаемому
+		if res.StatusCode != e.expectedStatusCode {
+			t.Errorf("for %s expected %d but got %d", e.name, e.expectedStatusCode, res.StatusCode)
 		}
 	}
 }
@@ -128,6 +106,30 @@ func TestRepository_Reservation(t *testing.T) {
 
 	// проверяем прошел ли тест
 	if rr.Code != http.StatusOK {
+		t.Errorf("Reservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	}
+
+	// test case where reservation is not in session (reset everything)
+	req, _ = http.NewRequest("GET", "/make-reservation", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Reservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
+	}
+
+	// test with non-existent room
+	req, _ = http.NewRequest("GET", "/make-reservation", nil)
+	ctx = getCtx(req)
+	req = req.WithContext(ctx)
+	rr = httptest.NewRecorder()
+	reservation.RoomID = 100
+	session.Put(ctx, "reservation", reservation)
+
+	handler.ServeHTTP(rr, req)
+	if rr.Code != http.StatusTemporaryRedirect {
 		t.Errorf("Reservation handler returned wrong response code: got %d, wanted %d", rr.Code, http.StatusOK)
 	}
 
