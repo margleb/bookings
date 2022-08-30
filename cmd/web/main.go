@@ -11,6 +11,7 @@ import (
 	"github.com/margleb/booking/internal/render"
 	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"time"
 )
@@ -42,6 +43,13 @@ func main() {
 	// отложенное завершение подключения к БД
 	log.Println("Connected to database")
 	defer db.SQL.Close()
+
+	from := "me@here.com"
+	auth := smtp.PlainAuth("", from, "", "localhost")
+	err = smtp.SendMail("localhost:1025", auth, from, []string{"you@there.com"}, []byte("Hello, world"))
+	if err != nil {
+		log.Println(err)
+	}
 
 	// создаем сервер
 	srv := &http.Server{
