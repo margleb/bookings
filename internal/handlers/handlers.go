@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/driver"
@@ -206,6 +207,25 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		helpers.ServerError(w, err)
 		return
 	}
+
+	// отправляем сообщение об бронировании - сначала гостю
+	htmlMessage := fmt.Sprintf(`
+	<strong>Reservation Confirmation</strong><br>
+	Dear %s:, <br>
+	This is confirm your reservation from %s to %s.`,
+		reservation.FirstName,
+		reservation.StartDate.Format("2006-01-02"),
+		reservation.EndDate.Format("2006-01-02"))
+
+	msg := models.MailData{
+		To:      reservation.Email,
+		From:    "me@here.com",
+		Subject: "Reservation Confirmation",
+		Content: htmlMessage,
+	}
+
+	// помещаем его канал
+	m.App.MailChan <- msg
 
 	// добавляем в сессию данные бронирования для отображения на странице результатов бронирования
 	m.App.Session.Put(r.Context(), "reservation", reservation)
