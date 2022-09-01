@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"fmt"
 	"github.com/alexedwards/scs/v2"
 	"github.com/margleb/booking/internal/config"
 	"github.com/margleb/booking/internal/driver"
@@ -48,18 +49,20 @@ func main() {
 	defer close(app.MailChan)
 
 	// запускаем слушателя email
+
+	fmt.Println("Starting mail listener")
 	listenForMail()
 
 	// создаем email
-	msg := models.MailData{
-		To:      "john@do.ca",
-		From:    "me@here.com",
-		Subject: "Some subject",
-		Content: "",
-	}
-
-	// помещаем его канал
-	app.MailChan <- msg
+	//msg := models.MailData{
+	//	To:      "john@do.ca",
+	//	From:    "me@here.com",
+	//	Subject: "Some subject",
+	//	Content: "",
+	//}
+	//
+	//// помещаем его канал
+	//app.MailChan <- msg
 
 	from := "me@here.com"
 	auth := smtp.PlainAuth("", from, "", "localhost")
