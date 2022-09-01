@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/alexedwards/scs/v2"
+	"github.com/margleb/booking/internal/models"
 	"log"
 	"text/template"
 )
@@ -14,4 +15,5 @@ type AppConfig struct {
 	ErrorLog      *log.Logger                   // серверные ошибки
 	InProduction  bool                          // находится ли сайт в продакшене
 	Session       *scs.SessionManager
+	MailChan      chan models.MailData // канал для писем
 }

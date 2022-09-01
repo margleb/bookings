@@ -44,6 +44,23 @@ func main() {
 	log.Println("Connected to database")
 	defer db.SQL.Close()
 
+	// закрываем канал после отправки письма
+	defer close(app.MailChan)
+
+	// запускаем слушателя email
+	listenForMail()
+
+	// создаем email
+	msg := models.MailData{
+		To:      "john@do.ca",
+		From:    "me@here.com",
+		Subject: "Some subject",
+		Content: "",
+	}
+
+	// помещаем его канал
+	app.MailChan <- msg
+
 	from := "me@here.com"
 	auth := smtp.PlainAuth("", from, "", "localhost")
 	err = smtp.SendMail("localhost:1025", auth, from, []string{"you@there.com"}, []byte("Hello, world"))
@@ -72,6 +89,10 @@ func run() (*driver.DB, error) {
 	gob.Register(models.User{})
 	gob.Register(models.Room{})
 	gob.Register(models.Restriction{})
+
+	// канал созданный для отправки писем
+	mailChan := make(chan models.MailData)
+	app.MailChan = mailChan
 
 	app.InProduction = false // находится ли сайт в продакшене
 
